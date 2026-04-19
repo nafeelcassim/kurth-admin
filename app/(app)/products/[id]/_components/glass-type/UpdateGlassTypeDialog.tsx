@@ -20,6 +20,8 @@ import { useGlassType, useUpdateGlassType } from "@/hooks/api";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { ImageCropField, type ImageCropFieldValue } from "@/components/ImageCropField";
+
 import {
   updateGlassTypeSchema,
   type UpdateGlassTypeFormValues,
@@ -33,6 +35,7 @@ type UpdateGlassTypeDialogProps = {
 
 export function UpdateGlassTypeDialog({ glassTypeId, productId, trigger }: UpdateGlassTypeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<ImageCropFieldValue | undefined>(undefined);
   const updateGlassTypeMutation = useUpdateGlassType();
   const { toast } = useToast();
 
@@ -47,7 +50,6 @@ export function UpdateGlassTypeDialog({ glassTypeId, productId, trigger }: Updat
       enName: enExisting || glassType?.name || "",
       frName: frExisting,
       deName: deExisting,
-      imageUrl: glassType?.imageUrl ?? "",
       isActive: glassType?.isActive ?? true,
     }),
     [deExisting, enExisting, frExisting, glassType]
@@ -75,18 +77,15 @@ export function UpdateGlassTypeDialog({ glassTypeId, productId, trigger }: Updat
     const nextEnName = values.enName.trim();
     const nextFrName = values.frName.trim();
     const nextDeName = values.deName.trim();
-    const nextImageUrl = values.imageUrl?.trim() || "";
 
     const baseNameChanged = nextEnName !== (enExisting || glassType.name);
     const translationsChanged =
       nextEnName !== (enExisting || "") || nextFrName !== frExisting || nextDeName !== deExisting;
-    const imageUrlChanged = nextImageUrl !== (glassType.imageUrl ?? "");
     const isActiveChanged =
       typeof values.isActive === "boolean" && values.isActive !== glassType.isActive;
 
     const payload = {
       ...(baseNameChanged ? { name: nextEnName } : {}),
-      ...(imageUrlChanged ? { imageUrl: nextImageUrl || undefined } : {}),
       ...(isActiveChanged ? { isActive: values.isActive } : {}),
       ...(translationsChanged
         ? {
@@ -116,6 +115,7 @@ export function UpdateGlassTypeDialog({ glassTypeId, productId, trigger }: Updat
       toast("Updated successfully", { variant: "success" });
       setIsOpen(false);
       form.reset(defaultValues);
+      setCroppedImage(undefined);
     } catch {
       toast("Failed to update glass type", { variant: "error" });
     }
@@ -126,7 +126,10 @@ export function UpdateGlassTypeDialog({ glassTypeId, productId, trigger }: Updat
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) form.reset(defaultValues);
+        if (!open) {
+          form.reset(defaultValues);
+          setCroppedImage(undefined);
+        }
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -173,16 +176,30 @@ export function UpdateGlassTypeDialog({ glassTypeId, productId, trigger }: Updat
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Image URL</label>
-            <input
-              {...form.register("imageUrl")}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            {form.formState.errors.imageUrl?.message ? (
-              <div className="text-sm text-red-600">{form.formState.errors.imageUrl.message}</div>
-            ) : null}
-          </div>
+          <ImageCropField
+            uploadFolder="glass-type"
+            existingImageUrl={glassType?.imageUrl}
+            value={croppedImage}
+            onChange={async (next) => {
+              setCroppedImage(next);
+              if (next?.uploadedKey) {
+                try {
+                  await updateGlassTypeMutation.mutateAsync({
+                    id: glassTypeId,
+                    payload: {
+                      imageUrl: next.uploadedKey || undefined,
+                      aspectRatio: next.aspectRatio,
+                      productId,
+                    },
+                    productId,
+                  });
+                  toast("Image updated", { variant: "success" });
+                } catch {
+                  toast("Failed to update image", { variant: "error" });
+                }
+              }
+            }}
+          />
 
           <div className="flex items-center gap-2">
             <input

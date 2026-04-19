@@ -20,6 +20,8 @@ import { useShape, useUpdateShape } from "@/hooks/api";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { ImageCropField, type ImageCropFieldValue } from "@/components/ImageCropField";
+
 import {
   updateShapeSchema,
   type UpdateShapeFormValues,
@@ -32,6 +34,7 @@ type UpdateShapeDialogProps = {
 
 export function UpdateShapeDialog({ shapeId, trigger }: UpdateShapeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<ImageCropFieldValue | undefined>(undefined);
   const updateShapeMutation = useUpdateShape();
   const { toast } = useToast();
 
@@ -112,6 +115,7 @@ export function UpdateShapeDialog({ shapeId, trigger }: UpdateShapeDialogProps) 
       toast("Updated successfully", { variant: "success" });
       setIsOpen(false);
       form.reset(defaultValues);
+      setCroppedImage(undefined);
     } catch {
       toast("Failed to update shape", { variant: "error" });
     }
@@ -122,7 +126,10 @@ export function UpdateShapeDialog({ shapeId, trigger }: UpdateShapeDialogProps) 
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) form.reset(defaultValues);
+        if (!open) {
+          form.reset(defaultValues);
+          setCroppedImage(undefined);
+        }
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -180,6 +187,29 @@ export function UpdateShapeDialog({ shapeId, trigger }: UpdateShapeDialogProps) 
 
 
           </div>
+
+          <ImageCropField
+            uploadFolder="shape"
+            existingImageUrl={shape?.imageUrl}
+            value={croppedImage}
+            onChange={async (next) => {
+              setCroppedImage(next);
+              if (next?.uploadedKey) {
+                try {
+                  await updateShapeMutation.mutateAsync({
+                    id: shapeId,
+                    payload: {
+                      imageUrl: next.uploadedKey || undefined,
+                      aspectRatio: next.aspectRatio,
+                    },
+                  });
+                  toast("Image updated", { variant: "success" });
+                } catch {
+                  toast("Failed to update image", { variant: "error" });
+                }
+              }
+            }}
+          />
 
           <div className="space-y-4">
             <div className="text-sm font-semibold text-gray-900">Translations</div>

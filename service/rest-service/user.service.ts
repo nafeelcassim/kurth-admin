@@ -2,6 +2,11 @@ import { CreateUserResponse } from "@/hooks";
 import { api } from "../http.service";
 import type { CreateUserModel, FindUsersDto, MeResponse, PaginatedResponse, UpdateUserModel, UserListItem } from "@/models";
 
+export type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+};
+
 export const UserService = {
      getMe: async ()  => {
         const res = await api.get<MeResponse>('/user/me');
@@ -33,5 +38,10 @@ export const UserService = {
     updateUser: async (id:string,updateUserModel:UpdateUserModel) => {
         const res = await api.patch(`/user/${id}`,updateUserModel);
         return res.data;
-    }
+    },
+
+    changePassword: async (payload: ChangePasswordPayload) => {
+      const res = await api.patch('/user/change-password', payload);
+      return res.data;
+    },
 }

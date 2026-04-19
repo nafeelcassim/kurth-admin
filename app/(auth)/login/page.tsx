@@ -1,6 +1,8 @@
 "use client";
 
+import { useToast } from "@/components/core";
 import { useAuth } from "@/hooks";
+import { getApiErrorMessage } from "@/utils";
 import Image from "next/image";
 import { memo, useCallback, useMemo, useState } from "react";
 import Turnstile from "react-turnstile";
@@ -54,22 +56,11 @@ export default function LoginPage() {
 
     if (!captchaToken) return;
 
-    await mutateAsync({
-      email: email.toLowerCase().trim(),
-      password,
-      captchaToken,
-    });
-
-    // const sampleUsername = "admin@kurthglass.com";
-    // const samplePassword = "kurth123";
-
-    // if (email.trim().toLowerCase() === sampleUsername && password === samplePassword) {
-    //   document.cookie = "kurth_auth=1; Path=/; Max-Age=604800; SameSite=Lax";
-    //   router.push("/");
-    //   return;
-    // }
-
-    // setError("Invalid username or password.");
+      await mutateAsync({
+        email: email.toLowerCase().trim(),
+        password,
+        captchaToken,
+      });
   };
 
   return (
@@ -104,7 +95,7 @@ export default function LoginPage() {
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               {error ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {error.message ?? 'Something went wrong'}
+                  {getApiErrorMessage(error) ?? 'Something went wrong'}
                 </div>
               ) : null}
 
@@ -166,7 +157,7 @@ export default function LoginPage() {
                   />
                 ) : (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    Missing `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+                    Please contact support
                   </div>
                 )}
               </div>

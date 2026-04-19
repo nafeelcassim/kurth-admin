@@ -17,6 +17,9 @@ import {
 import { useProduct, useUpdateProduct } from "@/hooks/api";
 import { useToast } from "@/components/core/Toast/ToastProvider";
 
+import { ImageCropField, type ImageCropFieldValue } from "@/components/ImageCropField";
+import { ProductAspectRatio } from "@/models";
+
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -31,6 +34,7 @@ type UpdateProductDialogProps = {
 
 export function UpdateProductDialog({ productId, trigger }: UpdateProductDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<ImageCropFieldValue | undefined>(undefined);
   const updateProductMutation = useUpdateProduct();
   const { toast } = useToast();
 
@@ -117,6 +121,7 @@ export function UpdateProductDialog({ productId, trigger }: UpdateProductDialogP
       toast("Updated successfully", { variant: "success" });
       setIsOpen(false);
       form.reset(defaultValues);
+      setCroppedImage(undefined);
     } catch {
       toast("Failed to update product", { variant: "error" });
     }
@@ -127,7 +132,10 @@ export function UpdateProductDialog({ productId, trigger }: UpdateProductDialogP
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) form.reset(defaultValues);
+        if (!open) {
+          form.reset(defaultValues);
+          setCroppedImage(undefined);
+        }
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -178,6 +186,31 @@ export function UpdateProductDialog({ productId, trigger }: UpdateProductDialogP
                   </label>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-6">
+              <ImageCropField
+                uploadFolder="product"
+                existingImageUrl={product?.imageUrl}
+                value={croppedImage}
+                onChange={async (next) => {
+                  setCroppedImage(next);
+                  if (next?.uploadedKey) {
+                    try {
+                      await updateProductMutation.mutateAsync({
+                        id: productId,
+                        payload: {
+                          imageUrl: next.uploadedKey || undefined,
+                          aspectRatio: next.aspectRatio as ProductAspectRatio,
+                        },
+                      });
+                      toast("Image updated", { variant: "success" });
+                    } catch {
+                      toast("Failed to update image", { variant: "error" });
+                    }
+                  }
+                }}
+              />
             </div>
 
             <div className="mt-6 space-y-4">

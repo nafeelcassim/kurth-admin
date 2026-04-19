@@ -21,6 +21,8 @@ import type { CreateEdgeFinishingModel } from "@/models/edge-finishing";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { ImageCropField, type ImageCropFieldValue } from "@/components/ImageCropField";
+
 import {
   createEdgeFinishingSchema,
   type CreateEdgeFinishingFormValues,
@@ -33,6 +35,7 @@ type AddEdgeFinishingDialogProps = {
 
 export function AddEdgeFinishingDialog({ productId, trigger }: AddEdgeFinishingDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<ImageCropFieldValue | undefined>(undefined);
   const { toast } = useToast();
   const createEdgeFinishingMutation = useCreateEdgeFinishing();
 
@@ -41,7 +44,6 @@ export function AddEdgeFinishingDialog({ productId, trigger }: AddEdgeFinishingD
       enName: "",
       frName: "",
       deName: "",
-      imageUrl: "",
       pricePerLfm: 0,
       minLengthLfm: 0,
       isActive: true,
@@ -60,8 +62,12 @@ export function AddEdgeFinishingDialog({ productId, trigger }: AddEdgeFinishingD
   });
 
   const onSubmit = (values: CreateEdgeFinishingFormValues) => {
+    const imagePayload = croppedImage?.uploadedKey
+      ? { imageUrl: croppedImage.uploadedKey, aspectRatio: croppedImage.aspectRatio }
+      : {};
+
     const payload: CreateEdgeFinishingModel = {
-      imageUrl: values.imageUrl?.trim() || undefined,
+      ...imagePayload,
       pricePerLfm: values.pricePerLfm,
       minLengthLfm: values.minLengthLfm,
       isActive: typeof values.isActive === "boolean" ? values.isActive : true,
@@ -78,6 +84,7 @@ export function AddEdgeFinishingDialog({ productId, trigger }: AddEdgeFinishingD
         toast("Edge finishing added successfully", { variant: "success" });
         setIsOpen(false);
         form.reset(defaultValues);
+        setCroppedImage(undefined);
       })
       .catch(() => {
         toast("Failed to add edge finishing", { variant: "error" });
@@ -89,7 +96,10 @@ export function AddEdgeFinishingDialog({ productId, trigger }: AddEdgeFinishingD
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) form.reset(defaultValues);
+        if (!open) {
+          form.reset(defaultValues);
+          setCroppedImage(undefined);
+        }
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -134,16 +144,13 @@ export function AddEdgeFinishingDialog({ productId, trigger }: AddEdgeFinishingD
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Image URL</label>
-            <input
-              {...form.register("imageUrl")}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            {form.formState.errors.imageUrl?.message ? (
-              <div className="text-sm text-red-600">{form.formState.errors.imageUrl.message}</div>
-            ) : null}
-          </div>
+          <ImageCropField
+            uploadFolder="edge-finishing"
+            value={croppedImage}
+            onChange={(next) => {
+              setCroppedImage(next);
+            }}
+          />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">

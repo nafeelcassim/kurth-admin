@@ -14,6 +14,8 @@ export interface ShapeTranslationDetailItem {
 export interface ShapeListItem {
   id: string;
   name: string;
+  imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4" | null;
   isActive: boolean;
   priceMultiplier?: number;
   translations?: ShapeTranslationDetailItem[];
@@ -22,6 +24,8 @@ export interface ShapeListItem {
 export interface ShapeDetail {
   id: string;
   name: string;
+  imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4" | null;
   isActive: boolean;
   priceMultiplier?: number;
   translations: ShapeTranslationDetailItem[];
@@ -30,6 +34,8 @@ export interface ShapeDetail {
 export interface CreateShapeModel {
   productId: string;
   name: string;
+  imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4";
   translations: CreateShapeTranslationModel[];
   priceMultiplier?: number;
   isActive?: boolean;
@@ -43,6 +49,8 @@ export interface UpdateShapeTranslationModel {
 export interface UpdateShapeModel {
   productId?: string;
   name?: string;
+  imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4";
   translations?: UpdateShapeTranslationModel[];
   priceMultiplier?: number;
   isActive?: boolean;

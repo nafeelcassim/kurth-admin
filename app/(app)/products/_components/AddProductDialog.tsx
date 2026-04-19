@@ -17,6 +17,9 @@ import {
 import { useCreateProduct } from "@/hooks/api";
 import { useToast } from "@/components/core/Toast/ToastProvider";
 
+import { ImageCropField, type ImageCropFieldValue } from "@/components/ImageCropField";
+import { ProductAspectRatio, type CreateProductModel } from "@/models";
+
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -32,6 +35,7 @@ const LANGUAGES = ["en", "fr", "de"] as const;
 
 export function AddProductDialog({ trigger }: AddProductDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<ImageCropFieldValue | undefined>(undefined);
   const createProductMutation = useCreateProduct();
   const { toast } = useToast();
 
@@ -39,7 +43,6 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
     () => ({
       slug: "",
       isActive: true,
-      priceMultiplier: undefined,
       translations: LANGUAGES.map((language) => ({
         language,
         name: "",
@@ -63,8 +66,16 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
   }, [defaultValues, form, isOpen]);
 
   const onSubmit = (values: CreateProductFormValues) => {
-    const payload = {
+    const imagePayload = croppedImage?.uploadedKey
+      ? {
+          imageUrl: croppedImage.uploadedKey,
+          aspectRatio: croppedImage.aspectRatio as ProductAspectRatio,
+        }
+      : {};
+
+    const payload: CreateProductModel = {
       ...values,
+      ...imagePayload,
       translations: values.translations.map((t) => ({
         language: t.language,
         name: t.name,
@@ -78,6 +89,7 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
         toast("Added successfully", { variant: "success" });
         setIsOpen(false);
         form.reset(defaultValues);
+        setCroppedImage(undefined);
       })
       .catch(() => {
         toast("Failed to add product", { variant: "error" });
@@ -89,7 +101,10 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) form.reset(defaultValues);
+        if (!open) {
+          form.reset(defaultValues);
+          setCroppedImage(undefined);
+        }
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -140,30 +155,14 @@ export function AddProductDialog({ trigger }: AddProductDialogProps) {
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="space-y-2 sm:col-span-1">
-                <label className="text-sm font-medium text-gray-700">
-                  Price multiplier (optional)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  inputMode="decimal"
-                  {...form.register("priceMultiplier", {
-                    setValueAs: (v) => {
-                      if (v === "" || v === null || typeof v === "undefined") return undefined;
-                      const n = Number(v);
-                      return Number.isFinite(n) ? n : undefined;
-                    },
-                  })}
-                  className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-                {form.formState.errors.priceMultiplier?.message ? (
-                  <div className="text-sm text-red-600">
-                    {form.formState.errors.priceMultiplier.message}
-                  </div>
-                ) : null}
-              </div>
+            <div className="mt-6">
+              <ImageCropField
+                uploadFolder="product"
+                value={croppedImage}
+                onChange={(next) => {
+                  setCroppedImage(next);
+                }}
+              />
             </div>
 
             <div className="mt-6 space-y-4">

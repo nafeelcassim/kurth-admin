@@ -3,9 +3,15 @@ import { z } from "zod";
 const productLanguageSchema = z.enum(["en", "fr", "de"]);
 
 export const createProductSchema = z.object({
-  slug: z.string().min(1, "Slug is required"),
+  slug: z
+  .string()
+  .min(1, "Slug is required")
+  .max(100, "Slug must be less than 100 characters")
+  .regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    "Slug must be lowercase, contain only letters, numbers, and hyphens, and cannot start or end with a hyphen"
+  ),
   isActive: z.boolean().optional(),
-  priceMultiplier: z.number().positive().optional(),
   translations: z
     .array(
       z.object({

@@ -73,6 +73,7 @@ export const queryKeys = {
     create: () => ["create-user"] as const,
     update: () => ["update-user"] as const,
     delete: () => ["delete-user"] as const,
+    changePassword: () => ["change-password"] as const,
   },
   product: {
     list: () => ["products"] as const,

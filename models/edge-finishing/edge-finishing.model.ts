@@ -15,6 +15,7 @@ export interface EdgeFinishingListItem {
   id: string;
   name: string;
   imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4" | null;
   pricePerLfm: number;
   minLengthLfm: number;
   isActive: boolean;
@@ -25,6 +26,7 @@ export interface EdgeFinishingDetail {
   id: string;
   name: string;
   imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4" | null;
   pricePerLfm: number;
   minLengthLfm: number;
   isActive: boolean;
@@ -33,6 +35,7 @@ export interface EdgeFinishingDetail {
 
 export interface CreateEdgeFinishingModel {
   imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4";
   pricePerLfm: number;
   minLengthLfm: number;
   isActive?: boolean;
@@ -46,6 +49,7 @@ export interface UpdateEdgeFinishingTranslationModel {
 
 export interface UpdateEdgeFinishingModel {
   imageUrl?: string;
+  aspectRatio?: "1:1" | "4:3" | "3:4";
   pricePerLfm?: number;
   minLengthLfm?: number;
   isActive?: boolean;

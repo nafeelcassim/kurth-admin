@@ -21,6 +21,8 @@ import type { CreateShapeModel } from "@/models/shape";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { ImageCropField, type ImageCropFieldValue } from "@/components/ImageCropField";
+
 import {
   createShapeSchema,
   type CreateShapeFormValues,
@@ -42,6 +44,7 @@ function slugify(value: string) {
 
 export function AddShapeDialog({ productId, trigger }: AddShapeDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<ImageCropFieldValue | undefined>(undefined);
   const { toast } = useToast();
   const createShapeMutation = useCreateShape();
 
@@ -61,9 +64,14 @@ export function AddShapeDialog({ productId, trigger }: AddShapeDialogProps) {
   });
 
   const onSubmit = (values: CreateShapeFormValues) => {
+    const imagePayload = croppedImage?.uploadedKey
+      ? { imageUrl: croppedImage.uploadedKey, aspectRatio: croppedImage.aspectRatio }
+      : {};
+
     const payload: CreateShapeModel = {
       productId,
       name: slugify(values.enName),
+      ...imagePayload,
       translations: [
         { language: "en", name: values.enName.trim() },
         { language: "fr", name: values.frName.trim() },
@@ -78,6 +86,7 @@ export function AddShapeDialog({ productId, trigger }: AddShapeDialogProps) {
         toast("Shape added successfully", { variant: "success" });
         setIsOpen(false);
         form.reset(defaultValues);
+        setCroppedImage(undefined);
       })
       .catch(() => {
         toast("Failed to add shape", { variant: "error" });
@@ -89,7 +98,10 @@ export function AddShapeDialog({ productId, trigger }: AddShapeDialogProps) {
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) form.reset(defaultValues);
+        if (!open) {
+          form.reset(defaultValues);
+          setCroppedImage(undefined);
+        }
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -113,6 +125,14 @@ export function AddShapeDialog({ productId, trigger }: AddShapeDialogProps) {
               <div className="text-sm text-red-600">{form.formState.errors.enName.message}</div>
             ) : null}
           </div>
+
+          <ImageCropField
+            uploadFolder="shape"
+            value={croppedImage}
+            onChange={(next) => {
+              setCroppedImage(next);
+            }}
+          />
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">French (FR)</label>

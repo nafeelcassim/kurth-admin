@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import SideMenu from "./SideMenu";
 import { useAuth } from "@/hooks/api/useAuth";
-import { IconHamburger, IconHome, IconOrders, IconProducts, IconUsers,  } from "./core/Icon";
+import { IconHamburger, IconHome, IconOrders, IconProducts, IconSettings, IconUsers } from "./core/Icon";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -38,7 +38,12 @@ export default function AppShell({ children }: AppShellProps) {
         label: "Admin Users",
         href: "/users",
         icon: <IconUsers className="h-5 w-5" />,
-      }
+      },
+      {
+        label: "Settings",
+        href: "/settings",
+        icon: <IconSettings className="h-5 w-5" />,
+      },
     ],
     [],
   );

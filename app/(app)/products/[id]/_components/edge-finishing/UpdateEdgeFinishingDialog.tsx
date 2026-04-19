@@ -20,6 +20,8 @@ import { useEdgeFinishing, useUpdateEdgeFinishing } from "@/hooks/api";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { ImageCropField, type ImageCropFieldValue } from "@/components/ImageCropField";
+
 import {
   updateEdgeFinishingSchema,
   type UpdateEdgeFinishingFormValues,
@@ -37,6 +39,7 @@ export function UpdateEdgeFinishingDialog({
   trigger,
 }: UpdateEdgeFinishingDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<ImageCropFieldValue | undefined>(undefined);
   const updateEdgeFinishingMutation = useUpdateEdgeFinishing();
   const { toast } = useToast();
 
@@ -56,7 +59,6 @@ export function UpdateEdgeFinishingDialog({
       enName: enName ?? edgeFinishing?.name ?? "",
       frName: frName ?? "",
       deName: deName ?? "",
-      imageUrl: edgeFinishing?.imageUrl ?? "",
       pricePerLfm: Number(edgeFinishing?.pricePerLfm ?? 0),
       minLengthLfm: Number(edgeFinishing?.minLengthLfm ?? 0),
       isActive: edgeFinishing?.isActive ?? true,
@@ -81,11 +83,6 @@ export function UpdateEdgeFinishingDialog({
 
   const onSubmit = async (values: UpdateEdgeFinishingFormValues) => {
     if (!edgeFinishing) return;
-
-    const imageUrl = values.imageUrl?.trim() || undefined;
-    const currentImageUrl = edgeFinishing.imageUrl || undefined;
-
-    const imageUrlChanged = imageUrl !== currentImageUrl;
 
     const pricePerLfmChanged =
       typeof values.pricePerLfm === "number" &&
@@ -116,7 +113,6 @@ export function UpdateEdgeFinishingDialog({
       nextTranslations[2].name !== (currentDe ?? "");
 
     const payload = {
-      ...(imageUrlChanged ? { imageUrl } : {}),
       ...(pricePerLfmChanged ? { pricePerLfm: values.pricePerLfm } : {}),
       ...(minLengthLfmChanged ? { minLengthLfm: values.minLengthLfm } : {}),
       ...(isActiveChanged ? { isActive: values.isActive } : {}),
@@ -147,7 +143,10 @@ export function UpdateEdgeFinishingDialog({
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) form.reset(defaultValues);
+        if (!open) {
+          form.reset(defaultValues);
+          setCroppedImage(undefined);
+        }
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -194,16 +193,29 @@ export function UpdateEdgeFinishingDialog({
             ) : null}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Image URL</label>
-            <input
-              {...form.register("imageUrl")}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-            {form.formState.errors.imageUrl?.message ? (
-              <div className="text-sm text-red-600">{form.formState.errors.imageUrl.message}</div>
-            ) : null}
-          </div>
+          <ImageCropField
+            uploadFolder="edge-finishing"
+            existingImageUrl={edgeFinishing?.imageUrl}
+            value={croppedImage}
+            onChange={async (next) => {
+              setCroppedImage(next);
+              if (next?.uploadedKey) {
+                try {
+                  await updateEdgeFinishingMutation.mutateAsync({
+                    id: edgeFinishingId,
+                    payload: {
+                      imageUrl: next.uploadedKey || undefined,
+                      aspectRatio: next.aspectRatio,
+                    },
+                    productId,
+                  });
+                  toast("Image updated", { variant: "success" });
+                } catch {
+                  toast("Failed to update image", { variant: "error" });
+                }
+              }
+            }}
+          />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">

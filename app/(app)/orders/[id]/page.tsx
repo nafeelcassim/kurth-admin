@@ -7,17 +7,10 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeftIcon } from "@radix-ui/react-icons";
 
 import { DataTable } from "@/components/core/Table";
-import { Select } from "@/components/core";
 
 import { useGetOrder, useGetOrderItems } from "@/hooks/api";
 import type { OrderItem, OrderStatus, OrderType } from "@/models/order";
 import type { Locale } from "@/service";
-
-const localeOptions = [
-  { value: "en", label: "EN" },
-  { value: "fr", label: "FR" },
-  { value: "de", label: "DE" },
-] as const;
 
 function formatMoney(value: string) {
   const n = Number(value);
@@ -67,7 +60,7 @@ export default function OrderDetailsPage() {
   const routeParams = useParams<{ id: string | string[] }>();
   const orderId = Array.isArray(routeParams?.id) ? routeParams?.id[0] : routeParams?.id;
 
-  const [locale, setLocale] = useState<Locale>("en");
+  const [locale] = useState<Locale>("en");
 
   const [itemsPagination, setItemsPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
@@ -153,6 +146,25 @@ export default function OrderDetailsPage() {
               <div className="text-sm text-gray-700 truncate">Thickness: {i.thickness?.value ?? "-"}mm</div>
               <div className="text-sm text-gray-700 truncate">Holes: {i.holes?.reduce((acc, h) => acc + h.quantity, 0) ?? 0}</div>
             </div>
+          );
+        },
+      },
+      {
+        id: "sketch",
+        header: "Sketch",
+        cell: ({ row }) => {
+          const sketchUrl = row.original.sketchUrl;
+          if (!sketchUrl) return <span className="text-sm text-gray-500">-</span>;
+
+          return (
+            <a
+              href={sketchUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-9 items-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Download sketch
+            </a>
           );
         },
       },

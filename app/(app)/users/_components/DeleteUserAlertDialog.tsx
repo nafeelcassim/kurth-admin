@@ -17,6 +17,8 @@ import {
 } from "@/components/core";
 
 import { useDeleteUser } from "@/hooks/api";
+import { useToast } from "@/components/core/Toast/ToastProvider";
+import { getApiErrorMessage } from "@/utils";
 
 type DeleteUserAlertDialogProps = {
   userId: string;
@@ -25,6 +27,7 @@ type DeleteUserAlertDialogProps = {
 export function DeleteUserAlertDialog({ userId }: DeleteUserAlertDialogProps) {
   const deleteUserMutation = useDeleteUser();
   const [open, setOpen] = useState(false);
+  const { toast } = useToast();
 
   const onDeleteClick = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -32,8 +35,9 @@ export function DeleteUserAlertDialog({ userId }: DeleteUserAlertDialogProps) {
     try {
       await deleteUserMutation.mutateAsync(userId);
       setOpen(false);
-    } catch {
-      // keep dialog open on error
+    } catch (error: unknown) {
+      setOpen(false);
+      toast(getApiErrorMessage(error), { variant: "error" });
     }
   };
 
