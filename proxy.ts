@@ -6,18 +6,25 @@ export default function middleware(req: NextRequest) {
   
   // 1. Get the actual JWT from the HttpOnly cookie
   const accessToken = req.cookies.get("access_token")?.value;
+  const refreshToken = req.cookies.get("refresh_token")?.value;
 
   // 2. Define Protected Routes and their required roles
   const isProtectedRoute = pathname === "/" || pathname.startsWith("/orders") || pathname.startsWith("/users") || pathname.startsWith("/products");
   const isAuthRoute = pathname === "/login";
 
   if (isProtectedRoute) {
+
+    // Optional: decode access token for roles here
+    if (!refreshToken) {
+      // Refresh token missing → redirect to login
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+
     if (!accessToken) {
       // Access token missing → let frontend try refresh
       return NextResponse.next();
     }
 
-    // Optional: decode access token for roles here
 
     return NextResponse.next();
   }
