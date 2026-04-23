@@ -15,10 +15,10 @@ export default function middleware(req: NextRequest) {
   if (isProtectedRoute) {
 
     // Optional: decode access token for roles here
-    if (!refreshToken) {
-      // Refresh token missing → redirect to login
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
+    // if (!refreshToken) {
+    //   // Refresh token missing → redirect to login
+    //   return NextResponse.redirect(new URL("/login", req.url));
+    // }
 
     if (!accessToken) {
       // Access token missing → let frontend try refresh
